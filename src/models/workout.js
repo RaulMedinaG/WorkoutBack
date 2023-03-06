@@ -13,13 +13,9 @@ const WorkoutSchema = new mongoose.Schema({
         type:Array,
         required :true
     },
-    exercises:{
-        type:Array,
-        required :true
-    },
     trainerTips:{
         type:Array,
-        required : true
+        required :true
     }
     
 

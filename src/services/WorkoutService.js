@@ -31,6 +31,7 @@ const createNewWorkout = (newWorkout) => {
     } catch(error) {
         throw error;
     }
+    
 };
 
 const updateOneWorkout = (workoutId, changes) => {

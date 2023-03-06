@@ -1,6 +1,6 @@
-const utils = require("./utils");
 const model = require("../models/workout");
 const {response} = require('express');
+const workout = require("../models/workout");
 
 async function getAllWorkouts (filterParams, req, res = response) {
     try {
@@ -21,15 +21,11 @@ async function getAllWorkouts (filterParams, req, res = response) {
     }
 };
 
-const getOneWorkout = (workoutId) => {
+const getOneWorkout = async (workoutId) => {
     try{
-        const workout = DB.workouts.find((workout) => workout.id === workoutId);
-        if(!workout){
-            throw {
-                status: 400,
-                message: `Cant find workout with the id '${workoutId}'`
-            }
-        }
+        workout = await model.findById(workoutId);
+        console.log(workout);
+
         return workout;
     } catch (error) {
         throw { status: error?.status || 500, message: error?.message || error}
@@ -38,12 +34,8 @@ const getOneWorkout = (workoutId) => {
 
 const createNewWorkout = async(req, res = response) => {
 
-    console.log(req.body);
-
-    const { name, mode, equipment = [], exercises = [], trainerTips = [] } = req.body;
-
     try{
-        const dbworkout = new model(req.body);
+        const dbworkout = new model(req);
         await dbworkout.save();
         return res.json({
             ok: true,
@@ -53,52 +45,33 @@ const createNewWorkout = async(req, res = response) => {
     }
 }
 
-const updateOneWorkout = (workoutId, changes) => {
+const updateOneWorkout = async (workoutId, changes) => {
     try{
-        const isAlreadyAdded = DB.workouts.findIndex((workout) => workout.name === changes.name) > -1;
-        if(isAlreadyAdded){
-            throw {
-                status: 400,
-                message: `Workout with the name '${changes.name}' already exists`,
-            };
-        }
-        const indexForUpdate = DB.workouts.findIndex((workout) => workout.id === workoutId);
-        if(indexForUpdate === -1){
+        const indexForUpdate = await model.findByIdAndUpdate(workoutId, changes);
+        if(!indexForUpdate){
             throw {
                 status: 400,
                 message: `Cant find workout with the id '${workoutId}'`,
             };
-        };
-        const updatedWorkout = {
-            ...DB.workouts[indexForUpdate],
-            ...changes,
-            updatedAt: new Date().toLocaleString("en-US", { timeZone: "UTC"}),
-        };
-        DB.workouts[indexForUpdate] = updatedWorkout;
-        utils.saveToDatabase(DB);
-        return updatedWorkout;
+        }
+        return indexForUpdate;
+
     } catch (error) {
         throw { status: error?.status || 500, message: error?.message || error}
     }
 };
 
-const deleteOneWorkout = (workoutId) => {
+const deleteOneWorkout = async(workoutId) => {
+
     try{
-        const indexForDeletion = DB.workouts.findIndex((workout)=>workout.id===workoutId);
-        if(indexForDeletion === -1){
-            throw {
-                status: 400,
-                message: `Cant find workout with the id '${workoutId}'`,
-            };
-        }
-        DB.workouts.splice(indexForDeletion, 1);
-        utils.saveToDatabase(DB);
+
+        const dbworkout = await model.findByIdAndDelete(workoutId);
+
     } catch (error) {
         throw { status: error?.status || 500, message: error?.message || error};
     }
     
 };
-
 
 module.exports = {
     getAllWorkouts,
